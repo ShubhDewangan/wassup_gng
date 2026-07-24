@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WebSocket Test Client</title>
+<style>
+  body { font-family: sans-serif; max-width: 600px; margin: 30px auto; padding: 0 15px; }
+  input, textarea, button { width: 100%; padding: 8px; margin: 5px 0; box-sizing: border-box; }
+  button { cursor: pointer; }
+  #log { border: 1px solid #ccc; height: 300px; overflow-y: auto; padding: 10px; background: #f9f9f9; font-size: 13px; }
+  .sent { color: blue; }
+  .received { color: green; }
+  .system { color: gray; font-style: italic; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+</style>
+</head>
+<body>
+  <h2>WebSocket Test Client</h2>
+
+  <label>Server URL (without token)</label>
+  <input id="wsUrl" value="ws://localhost:8000" />
+
+  <label>JWT Token</label>
+  <input id="token" placeholder="paste token here" />
+
+  <div class="row">
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn">Disconnect</button>
+  </div>
+
+  <p>Status: <span id="status">Disconnected</span></p>
+
+  <hr />
+
+  <label>Chat ID</label>
+  <input id="chatId" placeholder="chat id for typing events" />
+
+  <div class="row">
+    <button id="typingStartBtn">Start Typing</button>
+    <button id="typingStopBtn">Stop Typing</button>
+  </div>
+
+  <hr />
+
+  <label>Raw JSON to send (for anything custom)</label>
+  <textarea id="rawPayload" rows="3">{"event":"typing:start","chatId":""}</textarea>
+  <button id="sendRawBtn">Send Raw JSON</button>
+
+  <hr />
+
+  <h3>Log</h3>
+  <div id="log"></div>
+
+  <script>
+    let socket = null;
+    const log = document.getElementById('log');
+    const statusEl = document.getElementById('status');
+
+    function addLog(text, cls) {
+      const line = document.createElement('div');
+      line.className = cls || '';
+      line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    document.getElementById('connectBtn').onclick = () => {
+      const baseUrl = document.getElementById('wsUrl').value.trim();
+      const token = document.getElementById('token').value.trim();
+
+      if (!baseUrl || !token) {
+        addLog('URL aur token dono chahiye', 'system');
+        return;
+      }
+
+      const fullUrl = `${baseUrl}?token=${token}`;
+      socket = new WebSocket(fullUrl);
+
+      socket.onopen = () => {
+        statusEl.textContent = 'Connected';
+        addLog('Connected to server', 'system');
+      };
+
+      socket.onmessage = (event) => {
+        addLog(`Received: ${event.data}`, 'received');
+      };
+
+      socket.onclose = (event) => {
+        statusEl.textContent = 'Disconnected';
+        addLog(`Disconnected (code: ${event.code}, reason: ${event.reason || 'none'})`, 'system');
+      };
+
+      socket.onerror = (err) => {
+        addLog('Error occurred, check console', 'system');
+        console.error(err);
+      };
+    };
+
+    document.getElementById('disconnectBtn').onclick = () => {
+      if (socket) {
+        socket.close();
+        socket = null;
+      }
+    };
+
+    function sendPayload(obj) {
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        addLog('Socket connected nahi hai', 'system');
+        return;
+      }
+      const str = JSON.stringify(obj);
+      socket.send(str);
+      addLog(`Sent: ${str}`, 'sent');
+    }
+
+    document.getElementById('typingStartBtn').onclick = () => {
+      const chatId = document.getElementById('chatId').value.trim();
+      sendPayload({ event: 'typing:start', chatId });
+    };
+
+    document.getElementById('typingStopBtn').onclick = () => {
+      const chatId = document.getElementById('chatId').value.trim();
+      sendPayload({ event: 'typing:stop', chatId });
+    };
+
+    document.getElementById('sendRawBtn').onclick = () => {
+      try {
+        const obj = JSON.parse(document.getElementById('rawPayload').value);
+        sendPayload(obj);
+      } catch (e) {
+        addLog('Invalid JSON in raw payload box', 'system');
+      }
+    };
+  </script>
+</body>
+</html>
