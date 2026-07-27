@@ -1,7 +1,7 @@
 const API_PATH = import.meta.env.VITE_API_URL
 
 export const apiFetch = async (path: string, options?: RequestInit) => {
-    console.log(typeof path, path)
+    // console.log(typeof path, path)
 
     // 1. Check if the body is a FormData object
     const isFormData = options?.body instanceof FormData;
@@ -33,7 +33,7 @@ export const apiFetch = async (path: string, options?: RequestInit) => {
 
     if (!res.ok) {
         const message = parsedData?.message || parsedData?.error || `Request Failed: ${res.status}`
-        if (!parsedData) console.log('Server HTML Error Response: ', rawText)
+        // if (!parsedData) console.log('Server HTML Error Response: ', rawText)
         throw new Error(message)
     }   
 

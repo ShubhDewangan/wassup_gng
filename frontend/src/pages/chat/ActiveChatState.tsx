@@ -66,7 +66,7 @@ const ActiveChatRoom: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
-  console.log(chat.members)
+  // console.log(chat.members)
 
   // Fetch chat room metadata and the first page of messages
   useEffect(() => {

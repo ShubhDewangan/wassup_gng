@@ -11,7 +11,7 @@ interface ChatListProps {
 const ChatList: React.FC<ChatListProps> = ({ onChatSelect }) => {
   const { chats, isLoading } = useChatRooms();
 
-  console.log(chats)
+  // console.log(chats)
 
   if (isLoading) {
     return (
