@@ -87,7 +87,7 @@ export const googleAuthCallbackController = asyncHandler(
         const user = await findOrCreateUserService(body)
 
         if (!user) {
-            return res.redirect('http://localhost:3000/login?error=auth_failed')
+            return res.redirect('http://localhost:5173/login?error=auth_failed')
         }
 
         const userId = user._id.toString()

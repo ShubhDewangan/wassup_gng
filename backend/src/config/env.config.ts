@@ -9,5 +9,5 @@ export const Env = {
   NEXT_ORIGIN: getEnv("NEXT_ORIGIN", "http://127.0.0.1:5500/websocket-client-check/index.html"),
   GOOGLE_CLIENT_SECRET: getEnv("GOOGLE_CLIENT_SECRET"),
   GOOGLE_CLIENT_ID: getEnv("GOOGLE_CLIENT_ID"),
-  GOOGLE_CALLBACK_URL: getEnv("GOOGLE_CALLBACK_URL", "http://localhost:3000")
+  GOOGLE_CALLBACK_URL: getEnv("GOOGLE_CALLBACK_URL", "http://localhost:5173")
 } as const;

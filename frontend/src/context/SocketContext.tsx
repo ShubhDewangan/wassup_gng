@@ -1,84 +1,77 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-refresh/only-export-components */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client'
-
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { useAuth } from './AuthContext'
-import { apiFetch } from '../lib/fetcher'
+import type React from "react";
+import { useAuth } from "./AuthContext";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface SocketContextType {
-    Socket: WebSocket | null
-    IsConnected: boolean
-    OnlineUsers: string[]
+    socket: WebSocket | null
+    isConnected: boolean
+    onlineUsers: string[]
     sendMessage: (type: string, payload: any) => void
 }
 
 const SocketContext = createContext<SocketContextType>({
-    Socket: null,
-    IsConnected: false,
-    OnlineUsers: [],
+    socket: null,
+    isConnected: false,
+    onlineUsers: [],
     sendMessage: () => {}
 })
 
-export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-    const [IsConnected, SetIsConnected] = useState<boolean>(false)
-    const [Socket, SetSocket] = useState<WebSocket | null>(null)
-    const [OnlineUsers, SetOnlineUsers] = useState<string[]>([])
-    const [token, setToken] = useState('')
+export const SocketProvider = ({ children }: { children: React.ReactNode}) => {
+    const { token } = useAuth()
+    const [socket, setSocket] = useState<WebSocket | null>(null)
+    const [ onlineUsers, setOnlineUsers ] = useState<string[]>([])
+    const [isConnected, setIsConnected] = useState(false)
     const wsRef = useRef<WebSocket | null>(null)
-
+    const navigate = useNavigate()
+    
     useEffect(() => {
-        const fetchToken = async () => {
-            try {
-            const data = await apiFetch('/api/auth/status')
-            setToken(data.token)
-        } catch (error) {
-            console.log(error)
-        }
-        }
 
-        fetchToken()
-    },[])
+        if (!token) return
 
-    useEffect(() => { 
-        const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL}?token=${token}`
-        const ws = new WebSocket(wsUrl)
-        wsRef.current = ws
+        const socket = new WebSocket(`${import.meta.env.VITE_PUBLIC_WS_URL}/?token=${token}`)
+        wsRef.current = socket
 
-        ws.onopen = () => {
+        socket.onopen = () => {
             console.log('You are Online!')
-            SetIsConnected(true)
-            SetSocket(ws)
+            setIsConnected(true)
+            setSocket(socket)
+            navigate('/chat')
         }
 
-        ws.onmessage = (event) => {
+        socket.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data)
 
-                switch (data.type) {
-                    case 'ONLINE_USERS':
-                        SetOnlineUsers(data.payload)
-                        break
-                    default: 
-                        break
+                // console.log(data)
+                if (data.event === 'presence:initial_list') {
+                    setOnlineUsers(data.data)
+                    // console.log(data.data)
+                } else if (data.event === 'presence:online') {
+                    setOnlineUsers(prev => prev.includes(data.data) ? prev : [...prev, data.data])
+                } else if (data.event === 'presence:offline') {
+                    setOnlineUsers(prev => prev.filter((user) => user !== data.data))
                 }
+                
             } catch (error) {
-                console.log('Error parsing WS server',error)
+                console.log(error)
             }
         }
 
-        ws.close = () => {
-            console.log('You are offline!')
-            SetIsConnected(false)
-            SetSocket(null)
+        socket.onclose = () => {
+            console.log('You are Offline!')
+            setIsConnected(false)
+            setSocket(null)
         }
 
-        ws.onerror = (error) => {
-            console.log('WS server error', error)
+        socket.onerror = (error) => {
+            console.log('Connection error: ', error)
         }
 
         return () => {
-            ws.close()
+            socket.close()
         }
     }, [token])
 
@@ -91,7 +84,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     return (
-        <SocketContext.Provider value={{Socket, IsConnected, OnlineUsers, sendMessage}}>{children}</SocketContext.Provider>
+        <SocketContext.Provider value={{ socket, isConnected, onlineUsers, sendMessage }}>{children}</SocketContext.Provider>
     )
 }
 

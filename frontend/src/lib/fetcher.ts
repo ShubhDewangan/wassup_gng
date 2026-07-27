@@ -1,23 +1,41 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// lib/fetcher.ts
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_PATH = import.meta.env.VITE_API_URL
 
-export async function apiFetch<T = any>(
-  path: string, 
-  options?: RequestInit
-): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...options?.headers },
-    ...options,
-  });
+export const apiFetch = async (path: string, options?: RequestInit) => {
+    console.log(typeof path, path)
 
-  if (!res.ok) {
-    // Attempt to extract backend error response JSON
-    const errorBody = await res.json().catch(() => null);
-    const message = errorBody?.message || errorBody?.error || `Request failed: ${res.status}`;
-    throw new Error(message);
-  }
+    // 1. Check if the body is a FormData object
+    const isFormData = options?.body instanceof FormData;
 
-  return res.json();
+    // 2. Conditionally construct headers
+    const customHeaders: Record<string, string> = {
+        ...((options?.headers as Record<string, string>) || {})
+    };
+
+    // Only inject JSON content type if it's NOT a multipart FormData upload
+    if (!isFormData && !customHeaders["Content-Type"]) {
+        customHeaders["Content-Type"] = "application/json";
+    }
+
+    const res = await fetch(`${API_PATH}${path}`, {
+        credentials: 'include',
+        ...options,         // Spread options first
+        headers: customHeaders // Apply our intelligently calculated headers last
+    })
+
+    const rawText = await res.text()
+
+    let parsedData = null
+    try {
+        if (rawText) parsedData = JSON.parse(rawText)
+    } catch {
+        parsedData = null
+    }
+
+    if (!res.ok) {
+        const message = parsedData?.message || parsedData?.error || `Request Failed: ${res.status}`
+        if (!parsedData) console.log('Server HTML Error Response: ', rawText)
+        throw new Error(message)
+    }   
+
+    return parsedData
 }

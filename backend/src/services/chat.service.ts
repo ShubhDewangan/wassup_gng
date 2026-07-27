@@ -99,19 +99,57 @@ export const getChatService = async (id: string, userId: string) => {
         })
     }
 
-    const messages = await messageModel.find({ chatId: id })
+    // const messages = await messageModel.find({ chatId: id })
+    //     .populate('sender', 'name avatar')
+    //     .populate({
+    //         path: 'replyTo',
+    //         select: 'content image sender',
+    //         populate: {
+    //             path: 'sender',
+    //             select: 'name avatar'
+    //         }
+    //     }).sort({ createdAt: -1 })
+
+    return {
+        chat,
+        // messages
+    }
+}
+
+export const getMessagesService = async (
+    chatId: string,
+    userId: string,
+    cursor?: string,
+    limit = 20
+) => {
+    const chat = await ChatModel.findOne({
+        _id: chatId,
+        participants: { $in: [userId] }
+    })
+
+    if (!chat) throw new BadRequestException('Chat not found!')
+
+    const query: Record<string, any> = { chatId }
+    if (cursor) {
+        query._id = { $lt: cursor }
+    }
+
+    const docs = await messageModel.find(query)
+        .sort({ _id: -1 })
+        .limit(limit + 1)
         .populate('sender', 'name avatar')
         .populate({
             path: 'replyTo',
             select: 'content image sender',
-            populate: {
-                path: 'sender',
-                select: 'name avatar'
-            }
-        }).sort({ createdAt: -1 })
+            populate: { path: 'sender', select: 'name avatar' }
+        })
 
+    const hasMore = docs.length > limit
+    const page = docs.slice(0, limit)
+    const nextCursor = hasMore ? page[page.length - 1]._id : null
     return {
-        chat,
-        messages
+        messages: page.reverse(),
+        hasMore,
+        nextCursor 
     }
 }

@@ -27,10 +27,10 @@ export function broadcastNewGroupCreation (participants: any[] | undefined, crea
 
         const socket = connectedUsers.get(participantId)
         if (socket && socket.readyState === WebSocket.OPEN) {
-            JSON.stringify({
+            socket.send(JSON.stringify({
                 event: 'group:added',
                 data: chat
-            })
+            }))
         }
     })
 }

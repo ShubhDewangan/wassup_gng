@@ -9,3 +9,7 @@ export const getUsersService = async ( userId: string ) => {
         { _id: { $ne: userId } }
     )
 }
+
+export const getSingleUserService = async ( otherUserId: string ) => {
+    return await userModel.findById(otherUserId)
+}

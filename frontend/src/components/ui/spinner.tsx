@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 import { RiLoaderLine } from "@remixicon/react"
 
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {

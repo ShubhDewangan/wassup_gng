@@ -29,7 +29,7 @@ const chatSchema = new mongoose.Schema<ChatDocument>({
     },
     groupName: {
         type: String,
-        default: `Group ${Date.now}`
+        default: `Group ${Date.now()}`
     },
     createdBy: {
         type: Schema.Types.ObjectId,
