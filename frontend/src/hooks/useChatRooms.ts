@@ -19,7 +19,7 @@ export const useChatRooms = () => {
         setLoading(true);
         setIsError(false);
         const data = await getChats();
-        // console.log("Raw chats from API:", data); 
+        console.log("Raw chats from API:", data); 
         setRawChats(data);
       } catch (error) {
         console.log("getChats failed:", error);
@@ -42,7 +42,7 @@ export const useChatRooms = () => {
         );
         setChats(processed);
       } catch (error) {
-        console.log("Something failed:", error);
+        console.log("getChatsDetails failed:", error);
       }
     };
     processAll();

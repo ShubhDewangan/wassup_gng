@@ -46,6 +46,8 @@ export const createMessageService = async (userId: string, body: {
         image: imageUrl
     })
 
+    await ChatModel.updateOne({ _id: chatId }, { $set: { lastMessage: message }})
+
     await message.populate([
         { path: 'sender', select: 'name avatar' },
         { path: 'replyTo', select: 'content image sender', populate: {

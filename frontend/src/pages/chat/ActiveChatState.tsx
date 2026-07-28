@@ -1,16 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
-import { Send, ShieldAlert, Paperclip, X, Loader2 } from 'lucide-react';
-import { Input } from '../../components/ui/input';
-import { Button } from '../../components/ui/button';
-import { getChatsDetails } from '../../lib/helper';
-import { apiFetch } from '../../lib/fetcher';
-import { getMessages } from '../../services/chat.service';
-import { useAuth } from '../../context/AuthContext';
-import { useSocket } from '../../context/SocketContext';
-import EmptyChatState from './EmptyChatState';
-import { Avatar, AvatarImage } from '../../components/ui/avatar';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useParams } from "react-router-dom";
+import { ArrowLeft, Send, ShieldAlert, Paperclip, X, Loader2 } from "lucide-react";
+import { Input } from "../../components/ui/input";
+import { Button } from "../../components/ui/button";
+import { getChatsDetails, getOtherUser } from "../../lib/helper";
+import { apiFetch } from "../../lib/fetcher";
+import { getMessages } from "../../services/chat.service";
+import { useAuth } from "../../context/AuthContext";
+import { useSocket } from "../../context/SocketContext";
+import EmptyChatState from "./EmptyChatState";
+import { Avatar, AvatarImage } from "../../components/ui/avatar";
+import { useNavigate } from "react-router-dom";
 
 interface ChatDetails {
   _id: string;
@@ -20,7 +22,8 @@ interface ChatDetails {
   isOnline?: boolean;
   otherUserId?: string;
   participants?: string[];
-  members?: string[]
+  members?: string;
+  createdBy?: string;
 }
 
 interface MessageType {
@@ -41,8 +44,8 @@ const SCROLL_TOP_THRESHOLD = 100;
 
 const ActiveChatRoom: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [message, setMessage] = useState<string>('');
-  const [chat, setChat] = useState<ChatDetails>({ _id: '' });
+  const [message, setMessage] = useState<string>("");
+  const [chat, setChat] = useState<ChatDetails>({ _id: "" });
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -53,38 +56,84 @@ const ActiveChatRoom: React.FC = () => {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldStickToBottom = useRef(true);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
+  const navigate = useNavigate();
 
   const { user } = useAuth();
   const { socket, onlineUsers } = useSocket();
+  // const { rawChat } = useChatRoom()
 
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
+  // console.log(typingUser)
   // console.log(chat.members)
+  const handleTyping = () => {
+    if (!socket || !id) return;
+
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      socket.send(
+        JSON.stringify({
+          event: "typing:start",
+          chatId: id,
+          userId: user?._id,
+        }),
+      );
+    }
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      socket.send(
+        JSON.stringify({
+          event: "typing:stop",
+          chatId: id,
+          userId: user?._id,
+        }),
+      );
+    }, 1000);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [id]);
 
   // Fetch chat room metadata and the first page of messages
   useEffect(() => {
     if (!id) return;
+    setTypingUsers([]);
 
     const loadChatAndMessages = async () => {
       setIsLoadingInitial(true);
       try {
-        const details = await getChatsDetails(id, user?._id ?? '', onlineUsers);
+        const details = await getChatsDetails(id, user?._id ?? "", onlineUsers);
         setChat(details);
 
-        const { messages: firstPage, hasMore: more, nextCursor: cursor } = await getMessages(id);
+        const {
+          messages: firstPage,
+          hasMore: more,
+          nextCursor: cursor,
+        } = await getMessages(id);
         setMessages(firstPage);
         setHasMore(more);
         setNextCursor(cursor);
         shouldStickToBottom.current = true;
       } catch (err) {
-        console.error('Failed to recover previous chat data:', err);
+        console.error("Failed to recover previous chat data:", err);
         setMessages([]);
         setHasMore(false);
         setNextCursor(null);
@@ -94,7 +143,7 @@ const ActiveChatRoom: React.FC = () => {
     };
 
     loadChatAndMessages();
-    setMessage('');
+    setMessage("");
     setImageFile(null);
     setImagePreview(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,7 +154,7 @@ const ActiveChatRoom: React.FC = () => {
     if (!chat.otherUserId || chat.isGroup) return;
     const isOnline = onlineUsers.includes(chat.otherUserId);
     setChat((prev) =>
-      prev.isOnline === isOnline ? prev : { ...prev, isOnline }
+      prev.isOnline === isOnline ? prev : { ...prev, isOnline },
     );
   }, [onlineUsers, chat.otherUserId, chat.isGroup]);
 
@@ -121,7 +170,11 @@ const ActiveChatRoom: React.FC = () => {
     shouldStickToBottom.current = false;
 
     try {
-      const { messages: older, hasMore: more, nextCursor: cursor } = await getMessages(id, nextCursor, MESSAGES_PAGE_SIZE);
+      const {
+        messages: older,
+        hasMore: more,
+        nextCursor: cursor,
+      } = await getMessages(id, nextCursor, MESSAGES_PAGE_SIZE);
 
       setMessages((prev) => {
         const existingIds = new Set(prev.map((m) => m._id));
@@ -135,11 +188,12 @@ const ActiveChatRoom: React.FC = () => {
       requestAnimationFrame(() => {
         if (container) {
           const newScrollHeight = container.scrollHeight;
-          container.scrollTop = newScrollHeight - prevScrollHeight + prevScrollTop;
+          container.scrollTop =
+            newScrollHeight - prevScrollHeight + prevScrollTop;
         }
       });
     } catch (err) {
-      console.error('Failed to load older messages:', err);
+      console.error("Failed to load older messages:", err);
     } finally {
       setIsLoadingMore(false);
     }
@@ -157,10 +211,10 @@ const ActiveChatRoom: React.FC = () => {
   useEffect(() => {
     if (!socket || !id) return;
 
-    const handleIncomingSocketMessage = (event: MessageEvent) => {
+    const handleIncomingSocketMessage = async (event: MessageEvent) => {
       try {
         const parsed = JSON.parse(event.data);
-        if (parsed.event === 'message:receive') {
+        if (parsed.event === "message:receive") {
           const incomingMsg = parsed.data as MessageType;
 
           if (String(incomingMsg.chatId) === String(id)) {
@@ -171,13 +225,39 @@ const ActiveChatRoom: React.FC = () => {
             });
           }
         }
+
+        if (parsed.event === "typing:start") {
+          if (String(parsed.chatId) !== String(id)) return;
+          if (String(parsed.userId) === String(user?._id)) return; // don't show your own typing
+
+          const otherUser = await getOtherUser(String(parsed.sender));
+          if (!otherUser) return;
+
+          setTypingUsers((prev) => {
+            if (prev.includes(otherUser.avatar)) return prev;
+            return [...prev, otherUser.avatar];
+          });
+        }
+
+        if (parsed.event === "typing:stop") {
+          if (String(parsed.chatId) !== String(id)) return;
+          if (String(parsed.userId) === String(user?._id)) return;
+
+          const otherUser = await getOtherUser(String(parsed.sender));
+          if (!otherUser) return;
+
+          setTypingUsers((prev) =>
+            prev.filter((avatar) => avatar !== otherUser.avatar),
+          );
+        }
       } catch (err) {
-        console.error('Error processing stream message block:', err);
+        console.error("Error processing stream message block:", err);
       }
     };
 
-    socket.addEventListener('message', handleIncomingSocketMessage);
-    return () => socket.removeEventListener('message', handleIncomingSocketMessage);
+    socket.addEventListener("message", handleIncomingSocketMessage);
+    return () =>
+      socket.removeEventListener("message", handleIncomingSocketMessage);
   }, [socket, id]);
 
   // Only auto-scroll to bottom on initial load or a genuinely new message,
@@ -185,7 +265,7 @@ const ActiveChatRoom: React.FC = () => {
   useEffect(() => {
     if (isLoadingInitial) return;
     if (shouldStickToBottom.current) {
-      scrollToBottom(messages.length <= MESSAGES_PAGE_SIZE ? 'auto' : 'smooth');
+      scrollToBottom(messages.length <= MESSAGES_PAGE_SIZE ? "auto" : "smooth");
       shouldStickToBottom.current = false;
     }
   }, [messages, isLoadingInitial]);
@@ -199,7 +279,7 @@ const ActiveChatRoom: React.FC = () => {
     if (!file) return;
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const clearImage = () => {
@@ -230,7 +310,7 @@ const ActiveChatRoom: React.FC = () => {
       image: localPreviewUrl ?? undefined,
     };
 
-    setMessage('');
+    setMessage("");
     clearImage();
     setIsSending(true);
     shouldStickToBottom.current = true;
@@ -238,23 +318,23 @@ const ActiveChatRoom: React.FC = () => {
 
     try {
       const formData = new FormData();
-      formData.append('chatId', id);
-      if (content.trim()) formData.append('content', content);
-      if (file) formData.append('image', file);
+      formData.append("chatId", id);
+      if (content.trim()) formData.append("content", content);
+      if (file) formData.append("image", file);
 
-      const res = await apiFetch('/api/message/send', {
-        method: 'POST',
+      const res = await apiFetch("/api/message/send", {
+        method: "POST",
         body: formData,
       });
 
       const savedMessage: MessageType = res?.message ?? res?.data ?? res;
       if (savedMessage?._id) {
         setMessages((prev) =>
-          prev.map((m) => (m._id === tempId ? savedMessage : m))
+          prev.map((m) => (m._id === tempId ? savedMessage : m)),
         );
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error("Failed to send message:", error);
       setMessages((prev) => prev.filter((m) => m._id !== tempId));
     } finally {
       setIsSending(false);
@@ -264,20 +344,34 @@ const ActiveChatRoom: React.FC = () => {
   return (
     <div className="flex flex-col h-full w-full bg-[#141414] animate-in fade-in duration-200">
       {/* Chat Room Header */}
-      <header className="h-20 border-b border-neutral-900 px-6 flex items-center justify-between shrink-0 bg-[#161616]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-950 flex items-center justify-center border border-purple-800 text-purple-300 font-bold text-sm">
+      <header className="h-16 sm:h-20 border-b border-neutral-900 px-4 sm:px-6 flex items-center justify-between shrink-0 bg-[#161616]">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <button
+            onClick={() => navigate("/chat")}
+            className="md:hidden shrink-0 p-1.5 text-neutral-400 hover:text-white rounded-full hover:bg-neutral-800 transition"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-purple-950 flex items-center justify-center border border-purple-800 text-purple-300 font-bold text-sm shrink-0">
             <Avatar>
               <AvatarImage
-                src={chat?.avatar || `https://dicebear.com{encodeURIComponent(chat?.name || 'User')}`}
+                src={
+                  chat?.avatar ||
+                  `https://dicebear.com{encodeURIComponent(chat?.name || 'User')}`
+                }
                 className="object-cover"
                 alt={chat?.name}
               />
             </Avatar>
           </div>
-          <div className="flex flex-col">
-            <h2 className="text-sm font-semibold text-white tracking-wide">{chat.name || 'Loading...'}</h2>
-            {/* {chat.isGroup && chat?.} */}
+          <div className="flex flex-col min-w-0">
+            <h2 className="text-sm sm:text-md font-semibold text-white tracking-wide truncate">
+              {chat.name || "Loading..."}
+            </h2>
+            <span className="text-[12px] sm:text-[13px] text-gray-400 truncate">
+              {chat.members}
+            </span>
           </div>
         </div>
       </header>
@@ -300,10 +394,18 @@ const ActiveChatRoom: React.FC = () => {
           </div>
         )}
 
-        <div className="flex items-center gap-2 p-4 bg-neutral-900/40 border border-neutral-800/60 rounded-xl max-w-md mx-auto text-neutral-400 text-xs my-4 shrink-0">
+        <div className="flex items-center gap-2 p-4 bg-neutral-900/40 border border-neutral-800/60 rounded-xl max-w-md mx-auto text-neutral-400 text-xs mt-4 shrink-0">
           <ShieldAlert className="w-4 h-4 text-purple-400 shrink-0" />
-          <span>Messages are end-to-end synchronized over active channels.</span>
+          <span>
+            Messages are end-to-end synchronized over active channels.
+          </span>
         </div>
+        {chat.isGroup && (
+          <div className="flex items-center gap-2 p-2 bg-neutral-900/40 border border-neutral-800/60 rounded-xl max-w-md mx-auto text-neutral-400 text-xs mb-4 shrink-0">
+            {/* <ShieldAlert className="w-4 h-4 text-purple-400 shrink-0" /> */}
+            <span>Created by {chat.createdBy}</span>
+          </div>
+        )}
 
         <div className="flex-1 flex flex-col gap-3 justify-end">
           {isLoadingInitial ? (
@@ -316,13 +418,13 @@ const ActiveChatRoom: React.FC = () => {
               return (
                 <div
                   key={msg._id}
-                  className={`flex w-full flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                  className={`flex w-full flex-col ${isMe ? "items-end" : "items-start"}`}
                 >
                   <div
                     className={`max-w-[70%] rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
                       isMe
-                        ? 'bg-purple-600 text-white rounded-tr-none'
-                        : 'bg-neutral-900 text-neutral-200 border border-neutral-800/80 rounded-tl-none'
+                        ? "bg-purple-600 text-white rounded-tr-none"
+                        : "bg-neutral-900 text-neutral-200 border border-neutral-800/80 rounded-tl-none"
                     }`}
                   >
                     {!isMe && chat.isGroup && (
@@ -342,13 +444,31 @@ const ActiveChatRoom: React.FC = () => {
                     <p className="leading-relaxed break-words">{msg.content}</p>
 
                     <span className="block text-[9px] mt-1 text-right opacity-60 tracking-tighter">
-                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                 </div>
               );
             })
           )}
+          {typingUsers.length > 0 && (
+            <div className="flex gap-2 items-center transition-all duration-500 ease-out origin-left animate-in fade-in-0 zoom-in-95">
+              <div className="flex -space-x-1">
+                {typingUsers.map((avatar, index) => (
+                  <Avatar key={index}>
+                    <AvatarImage src={avatar} />
+                  </Avatar>
+                ))}
+              </div>
+              <span className="max-w-[70%] rounded-2xl px-4 py-2.5 text-sm shadow-sm bg-neutral-900 text-neutral-200 border border-neutral-800/80 rounded-tl-none">
+                typing...
+              </span>
+            </div>
+          )}
+
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -372,7 +492,10 @@ const ActiveChatRoom: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSendMessage} className="relative flex items-center gap-2">
+        <form
+          onSubmit={handleSendMessage}
+          className="relative flex items-center gap-2"
+        >
           <input
             type="file"
             accept="image/*"
@@ -394,7 +517,10 @@ const ActiveChatRoom: React.FC = () => {
             <Input
               type="text"
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                handleTyping();
+                setMessage(e.target.value);
+              }}
               placeholder="Type your message here..."
               className="w-full h-12 pl-4 pr-14 bg-neutral-900 border-neutral-800 text-white rounded-xl placeholder:text-neutral-600 focus-visible:ring-1 focus-visible:ring-purple-500"
             />

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Search, Plus, Users, MessageSquare, Loader2 } from 'lucide-react'
+import { Search, Plus, Users, MessageSquare, Loader2, LogOut } from 'lucide-react'
 import OnlineUsersTab from './OnlineUsersTab'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
@@ -10,7 +10,6 @@ import '../../App.css'
 import { apiFetch } from '../../lib/fetcher'
 import { useChatRooms } from '../../hooks/useChatRooms'
 import { useSocket } from '../../context/SocketContext'
-// import { useAuth } from '../../context/AuthContext'
 
 interface Contact {
   _id: string;
@@ -24,7 +23,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ contacts = [] }) => {
-  // const { user } = useAuth()
   const navigate = useNavigate();
   const { id: activeChatId } = useParams<{ id: string }>();
   const { chats, isLoading, isError, addChatToTop } = useChatRooms();
@@ -47,41 +45,41 @@ const Sidebar: React.FC<SidebarProps> = ({ contacts = [] }) => {
   };
 
   const handleCreateChat = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (selectedParticipants.length === 0) return;
-  if (isGroup && !groupName.trim()) return;
+    e.preventDefault();
+    if (selectedParticipants.length === 0) return;
+    if (isGroup && !groupName.trim()) return;
 
-  setIsSubmitting(true);
-  try {
-    const otherUser = contacts.find((c) => c._id === selectedParticipants[0]);
-    const resolvedGroupName = isGroup ? groupName : (otherUser?.name || 'Direct Chat');
+    setIsSubmitting(true);
+    try {
+      const otherUser = contacts.find((c) => c._id === selectedParticipants[0]);
+      const resolvedGroupName = isGroup ? groupName : (otherUser?.name || 'Direct Chat');
 
-    const payload = {
-      participantId: selectedParticipants[0],
-      participants: selectedParticipants,
-      isGroup,
-      groupName: resolvedGroupName
-    };
+      const payload = {
+        participantId: selectedParticipants[0],
+        participants: selectedParticipants,
+        isGroup,
+        groupName: resolvedGroupName
+      };
 
-    const data = await apiFetch('/api/chat/create', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
+      const data = await apiFetch('/api/chat/create', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
 
-    const createdChat = data?.chat ?? data;
+      const createdChat = data?.chat ?? data;
 
-    if (createdChat?._id) {
-      addChatToTop(createdChat);
-      setIsModalOpen(false);
-      resetForm();
-      navigate(`/chat/${createdChat._id}`);
+      if (createdChat?._id) {
+        addChatToTop(createdChat);
+        setIsModalOpen(false);
+        resetForm();
+        navigate(`/chat/${createdChat._id}`);
+      }
+    } catch (error) {
+      console.error('Failed to create chat:', error);
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error) {
-    console.error('Failed to create chat:', error);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   const resetForm = () => {
     setIsGroup(false);
@@ -90,39 +88,48 @@ const Sidebar: React.FC<SidebarProps> = ({ contacts = [] }) => {
   };
 
   return (
-    <aside className="w-1/4 min-w-[320px] h-screen bg-[#111111] flex flex-col font-sans relative border-r border-neutral-800">
+    <aside className="w-full md:w-1/4 md:min-w-[320px] h-screen bg-[#111111] flex flex-col font-sans relative border-r border-neutral-800">
 
       {/* Upper Gradient Card Header */}
-      <div className="bg-gradient-to-br from-[#a5e6da] via-[#b6c7f8] to-[#d3b4ed] p-6 pb-8 rounded-b-[40px] shadow-lg shrink-0">
+      <div className="bg-gradient-to-br from-[#a5e6da] via-[#b6c7f8] to-[#d3b4ed] p-4 sm:p-6 pb-6 sm:pb-8 rounded-b-[32px] sm:rounded-b-[40px] shadow-lg shrink-0">
 
-        <div className="flex items-center gap-2 mb-8">
+        <div className="flex items-center gap-2 mb-6 sm:mb-8">
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-600" />
             <Input
               type="text"
               placeholder="Search..."
-              className="h-12 pl-11 pr-4 bg-white/20 border-none rounded-full placeholder:text-neutral-700 text-neutral-900 focus-visible:ring-1 focus-visible:ring-purple-400/50"
+              className="h-11 sm:h-12 pl-11 pr-4 bg-white/20 border-none rounded-full placeholder:text-neutral-700 text-neutral-900 focus-visible:ring-1 focus-visible:ring-purple-400/50"
             />
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="p-3 bg-white/30 hover:bg-white/50 text-neutral-800 rounded-full transition shadow-sm shrink-0"
+            className="p-2.5 sm:p-3 bg-white/30 hover:bg-white/50 text-neutral-800 rounded-full transition shadow-sm shrink-0"
             title="New Chat"
           >
             <Plus className="w-5 h-5" />
           </button>
+
+          <button
+            onClick={() => navigate('/logout')}
+            className="p-2.5 sm:p-3 bg-white/30 hover:bg-white/50 text-neutral-800 rounded-full transition shadow-sm shrink-0"
+            title="Log out"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
 
-        <h1 className="text-[40px] leading-[1.1] font-bold text-white mb-8 tracking-tight max-w-[280px]">
-          Let's Stay Connected
+        <h1 className="text-[28px] sm:text-[40px] flex flex-col leading-[1.1] font-bold text-white mb-6 sm:mb-8 tracking-tight max-w-[280px]">
+          <span className='text-[#5F2A89]'>WASSUP?!</span>
+          <span>Let's Stay Connected</span>
         </h1>
 
         <OnlineUsersTab />
       </div>
 
       {/* Lower Scrollable Real-Time Chat List Area */}
-      <div className="flex-1 overflow-y-auto pt-6 px-4 pb-4 space-y-1 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto pt-6 px-3 sm:px-4 pb-4 space-y-1 custom-scrollbar">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="w-5 h-5 text-purple-500 animate-spin mb-2" />
@@ -167,9 +174,9 @@ const Sidebar: React.FC<SidebarProps> = ({ contacts = [] }) => {
                     <h3 className={`text-xs font-semibold truncate transition-colors ${isActive ? 'text-white' : 'text-neutral-200 group-hover:text-white'}`}>
                       {room.name || 'Conversation'}
                     </h3>
-                    {room.latestMessage?.createdAt && (
+                    {room.lastMessage?.createdAt && (
                       <span className="text-[10px] text-neutral-600 tracking-tighter shrink-0">
-                        {new Date(room.latestMessage.createdAt).toLocaleTimeString([], {
+                        {new Date(room.lastMessage.createdAt).toLocaleTimeString([], {
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
@@ -178,10 +185,10 @@ const Sidebar: React.FC<SidebarProps> = ({ contacts = [] }) => {
                   </div>
 
                   <p className="text-[11px] text-neutral-500 truncate max-w-[190px]">
-                    {room.latestMessage?.content ? (
-                      room.latestMessage.content
-                    ) : room.latestMessage?.image ? (
-                      <span className="text-purple-400 italic">📷 Attachment Image File</span>
+                    {room.lastMessage?.content ? (
+                      <span>{room.lastMessage.sender.name}: {room.lastMessage.content}</span>
+                    ) : room.lastMessage?.image ? (
+                      <span className="text-purple-400 italic">Image</span>
                     ) : (
                       <span className="text-neutral-600 italic">No messages sent yet</span>
                     )}
@@ -196,10 +203,10 @@ const Sidebar: React.FC<SidebarProps> = ({ contacts = [] }) => {
       {/* Modal Dialog */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1a1a1a] border border-neutral-800 w-full max-w-md rounded-2xl p-6 text-white shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[#1a1a1a] border border-neutral-800 w-full max-w-md rounded-2xl p-5 sm:p-6 text-white shadow-2xl animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
 
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-purple-400" /> Start a New Chat
               </h2>
               <button

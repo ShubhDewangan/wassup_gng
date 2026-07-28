@@ -3,7 +3,7 @@
 import type React from "react";
 import { useAuth } from "./AuthContext";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 
 interface SocketContextType {
     socket: WebSocket | null
@@ -25,7 +25,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode}) => {
     const [ onlineUsers, setOnlineUsers ] = useState<string[]>([])
     const [isConnected, setIsConnected] = useState(false)
     const wsRef = useRef<WebSocket | null>(null)
-    const navigate = useNavigate()
+    // const navigate = useNavigate()
     
     useEffect(() => {
 
@@ -38,7 +38,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode}) => {
             console.log('You are Online!')
             setIsConnected(true)
             setSocket(socket)
-            navigate('/chat')
+            // navigate('/chat')
         }
 
         socket.onmessage = (event) => {

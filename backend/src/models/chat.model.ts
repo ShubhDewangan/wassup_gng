@@ -33,7 +33,7 @@ const chatSchema = new mongoose.Schema<ChatDocument>({
     },
     createdBy: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'user',
         required: true,
     }
 }, {
