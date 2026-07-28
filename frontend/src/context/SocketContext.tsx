@@ -31,7 +31,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode}) => {
 
         if (!token) return
 
-        const socket = new WebSocket(`${import.meta.env.VITE_PUBLIC_WS_URL}/?token=${token}`)
+        const socket = new WebSocket(`${import.meta.env.VITE_WS_URL}/?token=${token}`)
         wsRef.current = socket
 
         socket.onopen = () => {
