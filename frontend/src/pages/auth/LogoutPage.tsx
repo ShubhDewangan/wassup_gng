@@ -1,25 +1,13 @@
 import { useEffect } from "react";
-import { apiFetch } from "../../lib/fetcher";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { LogOut } from "lucide-react";
 
 const LogoutPage = () => {
-  const navigate = useNavigate();
+  const { logout } = useAuth();
 
   useEffect(() => {
-    const logout = async () => {
-      try {
-        await apiFetch("/api/auth/logout", {
-          method: "POST",
-        });
-      } catch (error) {
-        console.log(error);
-      } finally {
-        navigate("/auth");
-      }
-    };
     logout();
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-[#141414]">
