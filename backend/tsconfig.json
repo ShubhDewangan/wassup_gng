@@ -1,16 +1,16 @@
 {
-    "compilerOptions": {
-        "target": "es2022",
-        "module": "commonjs",
-        "rootDir": "./src",
-        "outDir": "./dist",
-        "types": ["node"],
-        "allowJs": true,
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "typeRoots": ["./node_modules/@types", "./src/@types"]
-    },
-    "include": ["**/*", "../src/websocket/handlers/typingStatus.handler.ts", "../src/websocket/utils/presence.ts", "../src/websocket/connectionManager.ts", "../src/websocket/utils/broadcast.ts"],
-    "exclude": ["node_modules", "dist", "test"]
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "commonjs",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "types": ["node"],
+    "allowJs": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types", "./src/@types"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test"]
 }
