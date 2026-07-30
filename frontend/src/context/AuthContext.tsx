@@ -54,7 +54,7 @@ const AuthProvider = ({children} : {children: React.ReactNode}) => {
 
     const logout = async () => {
         try {
-            await apiFetch('/api/auth/logout')
+            await apiFetch('/api/auth/logout', { method: 'POST' })
         } catch (error) {
             console.log(error)
         } finally {
