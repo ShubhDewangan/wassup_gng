@@ -9,10 +9,7 @@ passport.use(
         {
             jwtFromRequest: ExtractJwt.fromExtractors([
                 (req) => {
-                    const token = req.cookies.usersessiontoken || req.headers.authorization
-                    if (!token) throw new UnauthorizedException('Unauthorized')
-                    
-                    return token
+                    return req.cookies?.usersessiontoken || req.headers?.authorization || null
                 }
             ]),
             secretOrKey: Env.JWT_SECRET,
