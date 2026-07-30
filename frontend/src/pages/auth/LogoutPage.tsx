@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { apiFetch } from "../../lib/fetcher";
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";

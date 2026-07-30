@@ -1,10 +1,11 @@
+/* eslint-disable react-refresh/only-export-components */
 "use client"
 
 import * as React from "react"
 import { Toast as ToastPrimitive } from "@base-ui/react/toast"
 
 import { cn } from "../../lib/utils"
-import { Button } from "../../lib/utils"
+import { Button } from "./button"
 import { RiCloseLine, RiCheckboxCircleLine, RiInformationLine, RiErrorWarningLine, RiCloseCircleLine, RiLoaderLine } from "@remixicon/react"
 
 const toast = ToastPrimitive.createToastManager()
