@@ -16,7 +16,6 @@ const GoogleAuth = () => {
         const res = await apiFetch("/api/auth/status");
         if (res.token) {
           navigate("/chat");
-          return;
         }
       } catch (err) {
         console.log(err);
