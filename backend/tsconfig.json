@@ -2,8 +2,8 @@
     "compilerOptions": {
         "target": "es2022",
         "module": "commonjs",
-        "rootDir": "src",
-        "outDir": "dist",
+        "rootDir": "./src",
+        "outDir": "./dist",
         "types": ["node"],
         "allowJs": true,
         "strict": true,

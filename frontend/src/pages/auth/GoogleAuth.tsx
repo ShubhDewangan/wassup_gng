@@ -69,10 +69,6 @@ const GoogleAuth = () => {
             <span>Let's Stay Connected</span>
           </h1>
 
-          <p className="text-sm text-neutral-800/70 mb-8 leading-relaxed">
-            Sign in to pick up right where you left off.
-          </p>
-
           <button
             onClick={() => googleAuth()}
             disabled={isAuthenticating}
@@ -102,10 +98,6 @@ const GoogleAuth = () => {
             </p>
           )}
         </div>
-
-        <p className="text-center text-xs text-neutral-600 mt-6">
-          By continuing, you agree to our Terms & Privacy Policy.
-        </p>
       </div>
     </div>
   );
