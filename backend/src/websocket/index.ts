@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import { Env } from "../config/env.config";
 import verifyWSToken from "../middlewares/authMiddleware.websocket.middleware";
 import { connectedUsers } from "./connectionManager";
-import { onlineUsersNotifyAction } from "../../src/websocket/utils/presence";
+import { onlineUsersNotifyAction } from "../websocket/utils/presence";
 import { typingStatusNotifyAction } from "../../src/websocket/handlers/typingStatus.handler";
 
 export function initWebSocketServer(server: http.Server) {
