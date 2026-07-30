@@ -6,7 +6,7 @@ import { Env } from "../config/env.config";
 import verifyWSToken from "../middlewares/authMiddleware.websocket.middleware";
 import { connectedUsers } from "./connectionManager";
 import { onlineUsersNotifyAction } from "../websocket/utils/presence";
-import { typingStatusNotifyAction } from "../../src/websocket/handlers/typingStatus.handler";
+import { typingStatusNotifyAction } from "../websocket/handlers/typingStatus.handler";
 
 export function initWebSocketServer(server: http.Server) {
   const ws = new WebSocketServer({ server });
