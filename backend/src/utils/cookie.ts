@@ -19,8 +19,8 @@ export const setJWTAuthCookie = ({res, userId}: Cookie) => {
     return res.cookie('usersessiontoken', token, {
         maxAge: 60 * 60 * 24 * 7 * 1000,
         httpOnly: true,
-        secure: Env.NODE_RUN_TYPE === 'production' ? true : false,
-        sameSite: Env.NODE_RUN_TYPE === 'production' ? 'strict' : 'lax'
+        secure: true,
+        sameSite: 'none'
     })
 }
 
