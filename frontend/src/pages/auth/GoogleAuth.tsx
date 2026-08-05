@@ -35,6 +35,7 @@ const GoogleAuth = () => {
           method: "POST",
           body: JSON.stringify({ accessToken: tokenResponse.access_token }),
         });
+        window.location.reload()
         navigate("/chat");
       } catch (err) {
         console.log("Authentication Error: ", err);
