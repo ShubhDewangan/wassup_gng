@@ -1,1 +1,0 @@
-This is a connection check client not to check if we can send messages but receive other non-database related interactions cause in this we are not hitting any backend api

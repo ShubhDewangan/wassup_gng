@@ -24,7 +24,7 @@ const GoogleAuth = () => {
       }
     };
     checkIfAuth();
-  }, []);
+  }, [setIsCheckingAuth]);
 
   const googleAuth = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
