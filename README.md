@@ -5,7 +5,7 @@
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 <div align="center">
-  <img src="assets/logo.png" width="100" alt="Wassup logo" />
+  <!-- <img src="assets/logo.png" width="100" alt="Wassup logo" /> -->
   <h1>Wassup?!</h1>
   <p>Real-time chat app built with React, Node.js, WebSockets, MongoDB, and quick auth using google Authentication.</p>
 </div>
@@ -16,7 +16,7 @@
   <img src="assets/demo.gif" width="650" alt="Wassup demo" />
 </p> -->
 
-## All About ![Static Badge](https://img.shields.io/badge/WASSUP?!-purple)
+## All About WASSUP?!
 
 Wassup is a real-time messaging app that lets users sign in with their Google account and chat instantly over WebSocket connections. Built to explore full-stack real-time architecture — Socket.IO for live message delivery, Google OAuth for auth, and MongoDB for Database.
 
@@ -60,7 +60,7 @@ cd wassup
 
 ### 2. Set up environment variables
 
-Create a `.env` file in `/server` (use `.env.example` as a reference):
+Create a `.env` in `/backend` (use `.env.example` as a reference):
 
 ```env
 NODE_RUN_TYPE=production or development(if using on localhost)
