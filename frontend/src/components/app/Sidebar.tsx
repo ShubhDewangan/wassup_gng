@@ -74,6 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ contacts = [] }) => {
         resetForm();
         navigate(`/chat/${createdChat._id}`);
       }
+      
     } catch (error) {
       console.error('Failed to create chat:', error);
     } finally {

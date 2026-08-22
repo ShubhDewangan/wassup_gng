@@ -56,7 +56,7 @@ export const useChatRooms = () => {
         const parsed = JSON.parse(messageEvent.data);
         
         // 1. Existing group creation event
-        if (parsed.event === "group:added") {
+        if (parsed.event === "chat:created") {
           setRawChats((prev: any) => {
             if (prev.some((chat: any) => chat._id === parsed.data._id))
               return prev;

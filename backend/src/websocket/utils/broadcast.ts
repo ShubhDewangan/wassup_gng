@@ -18,7 +18,7 @@ export function broadcastMessage (participants: any[], message: any, sender: str
     });
 }
 
-export function broadcastNewGroupCreation (participants: any[] | undefined, creator: any, chat: any) {
+export function broadcastNewChatCreation (participants: any[] | undefined, creator: any, chat: any) {
     const creatorId = creator.toString()
 
     participants?.forEach((participant) => {
@@ -28,8 +28,8 @@ export function broadcastNewGroupCreation (participants: any[] | undefined, crea
         const socket = connectedUsers.get(participantId)
         if (socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({
-                event: 'group:added',
-                data: chat
+                event: 'chat:created',
+                data: chat  
             }))
         }
     })

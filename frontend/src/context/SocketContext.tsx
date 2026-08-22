@@ -53,7 +53,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode}) => {
                     setOnlineUsers(prev => prev.includes(data.data) ? prev : [...prev, data.data])
                 } else if (data.event === 'presence:offline') {
                     setOnlineUsers(prev => prev.filter((user) => user !== data.data))
-                }
+                } 
                 
             } catch (error) {
                 console.log(error)

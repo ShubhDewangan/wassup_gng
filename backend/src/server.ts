@@ -22,7 +22,7 @@ app.use(express.json())
 app.use(cookieParser())
 app.use(express.urlencoded({ extended: true}))
 app.use(cors({
-    origin: Env.NEXT_ORIGIN,
+    origin: 'http://localhost:5173',
     credentials: true
 })) 
 app.use(passport.initialize())

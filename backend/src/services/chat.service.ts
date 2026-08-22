@@ -2,7 +2,7 @@ import ChatModel from "../models/chat.model";
 import messageModel from "../models/message.model";
 import userModel from "../models/user.model";
 import { BadRequestException, NotFoundException } from "../utils/app-error";
-import { broadcastNewGroupCreation } from "../websocket/utils/broadcast";
+import { broadcastNewChatCreation } from "../websocket/utils/broadcast";
 
 export const createChatService = async (
   userId: string,
@@ -27,7 +27,7 @@ export const createChatService = async (
       createdBy: userId,
     });
 
-    broadcastNewGroupCreation(chat.participants, chat.createdBy, chat);
+    broadcastNewChatCreation(chat.participants, chat.createdBy, chat);
   } else if (participantId) {
     const otherUser = await userModel.findById(participantId);
 
@@ -49,6 +49,8 @@ export const createChatService = async (
       createdBy: userId,
       groupName: groupName || otherUser.name,
     });
+
+    broadcastNewChatCreation(chat.participants, chat.createdBy, chat)
   }
 
   return chat;
